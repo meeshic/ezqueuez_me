@@ -1,0 +1,17 @@
+# local-only tooling config, not shared with the repo
+/.claude/
+/CLAUDE.md
+
+# Go build artifacts
+/bin/
+/ezqueuez
+*.exe
+*.test
+*.out
+
+# env
+.env
+.env.local
+
+# misc
+.DS_Store
