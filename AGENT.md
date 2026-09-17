@@ -22,28 +22,64 @@ people are currently inside.
 
 ## Status
 
-Go module is initialized (`github.com/meeshic/ezqueuez_me`, go1.27.0) with a
-placeholder entrypoint — just enough to confirm the toolchain builds and
-runs. No web framework, storage, or frontend has been chosen yet. Update the
-sections below as real decisions land — don't leave them stale once there's
-code to describe.
+Scaffolding only — both halves build and run, but neither does anything real
+yet. No HTTP server, storage, or API endpoints exist. Update the sections
+below as real decisions land; don't leave them stale once there's code to
+describe.
+
+## Layout
+
+The frontend and backend are deliberately separate, in one repo:
+
+```
+backend/    Go JSON API (module github.com/meeshic/ezqueuez_me/backend)
+frontend/   React + Vite + TypeScript single-page app
+```
+
+They are separate builds and separate deploys. Nothing is shared between
+them at build time — the API contract is the only coupling, so changes to it
+have to be made on both sides in the same change.
 
 ## Commands
 
+Backend (`cd backend`):
+
 ```bash
-go build ./...          # build everything
+go build ./...          # build
 go vet ./...            # static checks
 go test ./...           # run tests
-go run ./cmd/ezqueuez   # run the app
+go run ./cmd/ezqueuez   # run the API
 ```
 
-No CI, linter beyond `go vet`, or task runner yet — plain `go` commands are
-the whole workflow for now.
+Frontend (`cd frontend`):
+
+```bash
+npm install             # first time
+npm run dev             # dev server, proxies /api to localhost:8080
+npm run build           # typecheck + production build
+npm run lint            # oxlint
+```
+
+No CI or task runner yet — these commands are the whole workflow.
 
 ## Architecture
 
-`cmd/ezqueuez/main.go` is a placeholder entrypoint (prints a hello-world
-line) — nothing real lives here yet. Replace this note with the actual
-module layout, storage, and external services once they exist; prefer
-documenting the *why* behind non-obvious decisions over restating what the
-code already shows.
+**Backend** is a placeholder entrypoint at `backend/cmd/ezqueuez/main.go`
+(prints a hello-world line). Nothing real lives there yet. Intended shape
+when it grows: domain packages under `backend/internal/`, with storage and
+SMS behind interfaces so local dev and tests don't need a real database or a
+real SMS provider.
+
+**Frontend** routes are split by audience under `frontend/src/routes/`:
+`attendee/` and `host/`. They are lazily imported in `App.tsx` so an
+attendee's phone never downloads the host dashboard — keep that boundary
+intact, and don't import host code outside it. `src/api/client.ts` is the
+only place that talks to the backend.
+
+**CORS**: dev avoids it entirely via the Vite proxy (`/api` →
+`localhost:8080`). Production serves the two separately, so the backend will
+need real CORS headers before the first deploy — easy to forget, since
+nothing locally will tell you.
+
+Prefer documenting the *why* behind non-obvious decisions over restating
+what the code already shows.

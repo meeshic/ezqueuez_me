@@ -97,10 +97,22 @@ app can state honestly: how many people have actually entered.
 - Whether party size travels with an imported ticket, and whether it's
   reconfirmed at check-in.
 
-## Technical direction (proposed, not yet confirmed)
+## Technical direction
 
-Single Go binary rather than a separate frontend and API: server-rendered
-HTML with htmx for interactivity, SSE for live queue updates to both the
-attendee status page and the host dashboard. SQLite for storage to start.
-Store and SMS both behind interfaces. See CLAUDE.md for the current state of
-the actual codebase.
+**Frontend and backend are separate** — a Go JSON API under `backend/`, a
+React + Vite + TypeScript app under `frontend/`, in one repo but built and
+deployed independently. This was a deliberate choice over the simpler
+single-binary, server-rendered alternative first proposed; it costs CORS
+setup, two deploy artifacts and an API contract to maintain, and buys a
+conventional frontend stack and a path to a native app later.
+
+The frontend is one app, route-split by audience, so an attendee's phone
+doesn't download the host dashboard.
+
+Still undecided: storage (SQLite is the leading candidate — single venue,
+low concurrency, no separate DB server to run), and the live-update
+mechanism for queue position (SSE is the leading candidate over WebSockets,
+since updates only need to flow server→client). Store and SMS should both
+sit behind interfaces so local dev and tests don't need real infrastructure.
+
+See AGENT.md for the current state of the actual codebase.
