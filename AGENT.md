@@ -4,46 +4,74 @@ Guidance for AI coding agents working in this repository.
 
 ## Response style
 
-Be concise. Give the main point; if something needs clarification, the
-user will follow up.
+Be concise. Lead with what's new; skip preamble and skip recapping work the
+diff already shows. If something needs clarification, the user will follow
+up.
 
 ## What this project is
 
-ezqueuez_me is a virtual-line app for small events at space-constrained
-venues — attendees check in and track their place in line from their phone,
-the host admits them in batches as space allows.
+A virtual-line app for small events at space-constrained venues — attendees
+check in and track their place in line from their phone, the host admits
+them in batches as space allows.
 
 **Read [`.claude/product-concept.md`](.claude/product-concept.md) before
-doing product or architecture work.** It carries the scope decisions,
-functional requirements, and the governing principle that most often gets
-violated by well-meaning design: the app is deliberately *not* an occupancy
-authority. There is no departure signal, so it never computes how many
-people are currently inside.
+product or architecture work.** It holds the scope decisions, requirements,
+and the principle well-meaning design keeps violating: the app is
+deliberately *not* an occupancy authority. There's no departure signal, so
+it never computes how many people are inside.
 
 ## Status
 
-Go module is initialized (`github.com/meeshic/ezqueuez_me`, go1.27.0) with a
-placeholder entrypoint — just enough to confirm the toolchain builds and
-runs. No web framework, storage, or frontend has been chosen yet. Update the
-sections below as real decisions land — don't leave them stale once there's
-code to describe.
+Scaffolding only. Both halves build and run; neither does anything real.
+No HTTP server, storage, or endpoints yet. Keep the sections below current
+as that changes.
+
+## Layout
+
+```
+backend/    Go JSON API (module github.com/meeshic/ezqueuez_me/backend)
+frontend/   React + Vite + TypeScript SPA
+```
+
+Separate builds, separate deploys, nothing shared at build time. The API
+contract is the only coupling, so changes to it land on both sides in the
+same change.
 
 ## Commands
 
+From `backend/`:
+
 ```bash
-go build ./...          # build everything
-go vet ./...            # static checks
-go test ./...           # run tests
-go run ./cmd/ezqueuez   # run the app
+go build ./... && go vet ./... && go test ./...
+go run ./cmd/ezqueuez   # the API
 ```
 
-No CI, linter beyond `go vet`, or task runner yet — plain `go` commands are
-the whole workflow for now.
+From `frontend/`:
+
+```bash
+npm install             # first time
+npm run dev             # dev server; proxies /api to localhost:8080
+npm run build           # typecheck + build
+npm run lint            # oxlint
+```
+
+No CI or task runner yet.
 
 ## Architecture
 
-`cmd/ezqueuez/main.go` is a placeholder entrypoint (prints a hello-world
-line) — nothing real lives here yet. Replace this note with the actual
-module layout, storage, and external services once they exist; prefer
-documenting the *why* behind non-obvious decisions over restating what the
-code already shows.
+**Backend**: `backend/cmd/ezqueuez/main.go` is a hello-world placeholder.
+Intended shape as it grows — domain packages under `backend/internal/`, with
+storage and SMS behind interfaces so dev and tests need neither a real
+database nor a real SMS provider.
+
+**Frontend**: routes split by audience under `frontend/src/routes/` —
+`attendee/` and `host/`, lazily imported in `App.tsx` so an attendee's phone
+never downloads the host dashboard. Keep that boundary; don't import host
+code outside it. `src/api/client.ts` is the only place that talks to the
+backend.
+
+**CORS**: dev sidesteps it via the Vite proxy. Production serves the two
+separately, so the backend needs real CORS headers before the first deploy —
+easy to miss, since nothing local will tell you.
+
+Document the *why* behind non-obvious decisions, not what the code shows.

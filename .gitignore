@@ -1,6 +1,6 @@
 # Go build artifacts
-/bin/
-/ezqueuez
+/backend/bin/
+/backend/ezqueuez
 *.exe
 *.test
 *.out
